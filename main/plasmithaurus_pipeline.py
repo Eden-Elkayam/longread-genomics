@@ -1,39 +1,7 @@
 import os
 import subprocess
 from pathlib import Path
-from datetime import datetime
-
-# user provides name of input file.
-
-# return the full path to the input file, making sure it exists and in the right format
-def get_reads():
-    input_path = input("Enter the absolute path to your file:")
-    if not os.path.isfile(input_path):
-        print("File was not found, please try again.")
-        get_reads()
-    # continue when found a legitimate path to file
-    if not input_path.endswith((".fasta", ".fasta.gz", ".fastq", ".fastq.gz")):
-        print("File is not a fasta or fastq file, please try again.")
-        get_reads()
-    return input_path
-
-# returns the path to the result directory
-def get_output_dir(input_path):
-    output_path = input("Enter the absolute path to your output folder:")
-    if output_path:
-        output_path = Path(output_path)
-        output_path.mkdir(parents=True, exist_ok=True)
-    else:
-        output_path = os.getcwd()
-    # Now that output_path is all good, we need to create a new directory for the results
-
-    last_slash = input_path.rfind("/")
-    file_name = input_path[last_slash + 1:]
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M")
-    output_dir = str(output_path) + "/assembly_results/" + file_name + "_" + str(timestamp)
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    return str(output_dir)
+import util
 
 # Filter reads based on x100 coverage, reads that undergo this are ready to be assembled
 def filter_reads(input_file, output_dir):
@@ -134,8 +102,8 @@ def polishing(input_filtered, assembly_flye, out_dir, threads=8, m="r1041_e82_40
     print(f"Medaka polishing complete. Output: {out_dir}/consensus.fasta")
 
 def main():
-    raw_reads = get_reads()
-    output_dir = get_output_dir(raw_reads)
+    raw_reads = util.get_reads()
+    output_dir = util.get_output_dir(raw_reads)
     filtered_reads, genome_size = filter_reads(raw_reads, output_dir)
     assembly = assemble(filtered_reads, output_dir, genome_size)
     polishing(filtered_reads, assembly, output_dir)
