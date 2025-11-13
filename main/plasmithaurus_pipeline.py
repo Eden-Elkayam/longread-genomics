@@ -1,6 +1,5 @@
 import os
 import subprocess
-from pathlib import Path
 import util
 
 # Filter reads based on x100 coverage, reads that undergo this are ready to be assembled
@@ -59,53 +58,12 @@ def filter_reads(input_file, output_dir):
     print(f"reads were succesfully filtered. path to filtered read is: {x100coverage}, Genome size: {genome_size}")
     return x100coverage, genome_size
 
-
-def assemble(input_filtered, output_dir, genome_size, threads=8):
-    flye_output_dir = Path(str(output_dir) + "/flye_out")
-
-    # Make sure output directory exists
-    flye_output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Run Flye
-    subprocess.run(
-        [
-            "flye",
-            "--nano-hq", str(input_filtered),
-            "--out-dir", str(flye_output_dir),
-            "--threads", str(threads),
-            "--iterations",  str(2),
-            "--genome-size", str(genome_size),
-            "--plasmids"
-        ],
-        check=True
-    )
-    assembly_flye = str(flye_output_dir) + "/assembly.fasta"
-    print("Flye assembly complete. path to file:", assembly_flye)
-    return assembly_flye
-
-def polishing(input_filtered, assembly_flye, out_dir, threads=8, m="r1041_e82_400bps_sup_v4.3.0"):
-    medaka_output_dir = Path(str(out_dir) + "/medaka_out")
-    # Make sure output directory exists
-    medaka_output_dir.mkdir(parents=True, exist_ok=True)
-
-    subprocess.run(
-        [
-            "medaka_consensus",
-            "-i", str(input_filtered),
-            "-d", str(assembly_flye),
-            "-o", str(medaka_output_dir),
-            "-t", str(threads),
-            "-m", m
-        ],
-        check=True
-    )
-    print(f"Medaka polishing complete. Output: {out_dir}/consensus.fasta")
-
 def main():
     raw_reads = util.get_reads()
     output_dir = util.get_output_dir(raw_reads)
     filtered_reads, genome_size = filter_reads(raw_reads, output_dir)
-    assembly = assemble(filtered_reads, output_dir, genome_size)
-    polishing(filtered_reads, assembly, output_dir)
-
-main()
+    assembly = util.flye_assembly(filtered_reads, output_dir, genome_size)
+    polished = util.medaka_polishing(filtered_reads, assembly, output_dir)
+    reference = "/Users/edenelkayam/flamholz_lab/assembly/reference.fasta"
+    comparison = util.make_dnadiff(polished, output_dir, "plasmithaurus_pipeline", reference)
+    return comparison

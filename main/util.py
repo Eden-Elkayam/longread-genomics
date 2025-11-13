@@ -34,8 +34,60 @@ def get_output_dir(input_path:str) -> str:
     output_dir.mkdir(parents=True, exist_ok=True)
     return str(output_dir)
 
+def flye_assembly(input_reads, output_dir, genome_size=4800000, threads=8, quality="hq"):
+    flye_output_dir = Path(str(output_dir) + "/flye_out")
 
-def make_dnadiff(reference_path, sequence_path,output_dir,prefix):
+    # Make sure output directory exists
+    flye_output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Run Flye
+    subprocess.run(
+        [
+            "flye",
+            f"--nano-{quality}", str(input_reads),
+            "--out-dir", str(flye_output_dir),
+            "--threads", str(threads),
+            "--iterations",  str(2),
+            "--genome-size", str(genome_size),
+            "--plasmids"
+        ],
+        check=True
+    )
+    flye_file = str(flye_output_dir) + "/assembly.fasta"
+    print("Flye assembly complete. path to file:", flye_file)
+    return flye_file
+
+def medaka_polishing(reads, assembly, out_dir, threads=8, m="r1041_e82_400bps_sup_v4.3.0"):
+    medaka_output_dir = Path(str(out_dir) + "/medaka_out")
+    # Make sure output directory exists
+    medaka_output_dir.mkdir(parents=True, exist_ok=True)
+
+    subprocess.run(
+        [
+            "medaka_consensus",
+            "-i", str(reads),
+            "-d", str(assembly),
+            "-o", str(medaka_output_dir),
+            "-t", str(threads),
+            "-m", m
+        ],
+        check=True
+    )
+    output_file = str(medaka_output_dir) + "/consensus.fasta"
+    print(f"Medaka polishing complete. Output:{output_file}")
+    return output_file
+
+
+def make_dnadiff(sequence_path,output_dir,prefix,reference_path=None):
+    while reference_path is None:
+        reference_path = input("Enter the absolute path to your reference file:")
+        if not os.path.isfile(reference_path):
+            reference_path = None
+            print("File was not found, please try again.")
+        if not reference_path.endswith(".fasta"):
+            reference_path = None
+            print("File is not a fasta file, please try again.")
+
     dnadiff_output_dir = Path(str(output_dir) + "/dnadiffout")
     # create directory
     dnadiff_output_dir.mkdir(parents=True, exist_ok=True)
@@ -53,11 +105,3 @@ def make_dnadiff(reference_path, sequence_path,output_dir,prefix):
     print("dnadiff report generated. path to file:", dnadiff_report)
     return dnadiff_report
 
-def dna_diff_check():
-    reference_path = "/Users/edenelkayam/flamholz_lab/assembly/SRR1302084/sequence.fasta"
-    sequence_path = "/Users/edenelkayam/flamholz_lab/assembly/assembly_pipeline/assembly_results/SRR31302084.fastq_20251024-0931/medaka_out/consensus.fasta"
-    output_dir = "/Users/edenelkayam/flamholz_lab/assembly/assembly_pipeline/assembly_results/SRR31302084.fastq_20251024-0931/medaka_out/"
-    prefix = "ecoli"
-    make_dnadiff(reference_path, sequence_path, output_dir, prefix)
-
-#dna_diff_check()
