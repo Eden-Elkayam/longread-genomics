@@ -64,6 +64,8 @@ def main():
     filtered_reads, genome_size = filter_reads(raw_reads, output_dir)
     assembly = util.flye_assembly(filtered_reads, output_dir, genome_size)
     polished = util.medaka_polishing(filtered_reads, assembly, output_dir)
-    reference = "/Users/edenelkayam/flamholz_lab/assembly/reference.fasta"
-    comparison = util.make_dnadiff(polished, output_dir, "plasmithaurus_pipeline", reference)
+    reference_file = util.reference_gbk_to_fasta()
+    comparison = util.make_dnadiff(polished, output_dir, "plasmithaurus_pipeline", reference_file)
     return comparison
+
+main()

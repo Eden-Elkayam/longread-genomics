@@ -3,6 +3,7 @@ import subprocess
 from pathlib import Path
 import util
 
+# Chopping off the barcodes
 def porechop_trimmer(input_file:str, output_dir:str):
     chop_dir = Path(output_dir + "/porechop_output")
     chop_dir.mkdir(parents=True, exist_ok=True)
@@ -12,7 +13,7 @@ def porechop_trimmer(input_file:str, output_dir:str):
      "-o", output_file_path], check=True)
     return  output_file_path
 
-
+# Correcting the reads using Canu
 def canu(reads,output_dir ):
     canu_dir = Path(output_dir + "/canu_output")
     canu_dir.mkdir(parents=True, exist_ok=True)
@@ -26,6 +27,7 @@ def canu(reads,output_dir ):
     print("Canu is done! Output Folder is:", canu_dir)
     return canu_dir
 
+#
 def chopper_filter(input_file, output_dir):
     chopper_dir = Path(output_dir + "/chopper_output")
     chopper_dir.mkdir(parents=True, exist_ok=True)
@@ -42,9 +44,9 @@ def chopper_filter(input_file, output_dir):
     return output_file_path
 
 def main():
-    raw = "/Users/edenelkayam/flamholz_lab/assembly/SRR1302084/SRR31302084.fastq"
-    output_dir=util.get_output_dir(raw)
-    trimmed = porechop_trimmer(raw, output_dir+"/trimmed")
+    raw_reads = util.get_reads()
+    output_dir=util.get_output_dir(raw_reads)
+    trimmed = porechop_trimmer(raw_reads, output_dir+"/trimmed")
     #corrected = canu(chopped, output_dir) # takes so long
     filtered_reads = chopper_filter(trimmed, output_dir)
     assembly = util.flye_assembly(filtered_reads, output_dir, genome_size=4800000, threads=8, quality="raw")

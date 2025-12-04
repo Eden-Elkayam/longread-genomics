@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 import subprocess
+from Bio import SeqIO
 
 def get_reads() -> str:
     input_path = input("Enter the absolute path to your file:")
@@ -104,4 +105,16 @@ def make_dnadiff(sequence_path,output_dir,prefix,reference_path=None):
     dnadiff_report = str(dnadiff_output_dir) + f"/{prefix}.report"
     print("dnadiff report generated. path to file:", dnadiff_report)
     return dnadiff_report
+
+def reference_gbk_to_fasta(input_path=None):
+    if input_path is None:
+        input_path = input("Enter the absolute path to your reference file:")
+    i = input_path.rfind("/")
+    dir = input_path[:i]
+    name = input_path[i + 1:(input_path.rfind("."))]
+    output_file = f"{dir}/{name}.fasta"
+    count = SeqIO.convert(input_path, "genbank", output_file, "fasta")
+    print("Converted %i records" % count)
+    return output_file
+
 
